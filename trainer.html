@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chessboard Display</title>
+    <link rel="stylesheet" href="css/chessboard-1.0.0.min.css" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        #gameInfo {
+            margin-bottom: 20px;
+        }
+        #gameInfo p {
+            margin: 0;
+        }
+        #gameInfo span {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button id="startBtn">New problem</button>
+    </div>
+    <div id="gameInfo">
+        <p>W <span id="white"></span>
+        B <span id="black"></span>
+        result <span id="result"></span></p>
+    </div>
+    <h2><span id="toMove">Click 'New problem'</span> to move</h2>
+    <div id="board" style="width: 400px"></div>
+    <script src="js/chessboard-1.0.0.min.js"></script>
+    <script src="games.js"></script> <!-- games object -->
+    <script>
+        var game;
+
+        var board = Chessboard('board', {
+            draggable: true,
+            position: 'start',
+            onDrop: function(source, target, piece, newPos, oldPos, orientation) {
+                // Check if the move is legal (You can add logic here if needed)
+                console.log(source + target);
+
+                // Go through game.moves and find the move that matches the source and target
+                idx = game.moves.findIndex(move => move.move === source+target);
+
+                if(idx === -1) {
+                    alert('Not in top 5 moves!');
+                } else if(idx === 5) {
+                    alert('This was the blunder!')
+                } else {
+                    let ev = game.moves[idx].evaluation;
+                    if(game.toMove === 'b') ev = 1 - ev;
+                    ev = Math.round(ev * 100);
+                    alert(`This was the #${idx+1} engine move! Your winrate: ${ev} %`);
+                }
+                return 'snapback';
+            },
+            onDragStart: function(source, piece, position, orientation) {
+            // Only pick up pieces for the side to move
+            if ((game.turn === 'w' && piece.search(/^b/) !== -1) ||
+                (game.turn === 'b' && piece.search(/^w/) !== -1)) {
+                return false;
+            }
+        },
+        }); 
+
+        // Start button
+        $('#startBtn').on('click', () => {
+            console.log('Picking random position from games object');
+            console.log(games.length);
+            game = games[Math.floor(Math.random() * games.length)];
+            game['turn'] = game.fen.split(' ')[1]; 
+            // Load the board position from FEN
+            board.position(game.fen);
+            
+            // Fill out the game info
+            $('#white').text(game.players[1]);
+            $('#black').text(game.players[0]);
+            $('#result').text(game.result);
+            $('#toMove').text(game.turn === 'w' ? 'White' : 'Black');
+
+            game['bestEval'] = game.moves[0].evaluation;
+            // Log moves to console
+            for(move of game.moves) {
+                console.log(move);
+            }
+        });
+
+    </script> <!-- Your custom script -->
+</body>
+</html>
